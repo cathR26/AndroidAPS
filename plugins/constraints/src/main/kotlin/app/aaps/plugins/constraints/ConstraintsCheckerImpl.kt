@@ -68,14 +68,10 @@ class ConstraintsCheckerImpl @Inject constructor(
     override fun isSMBModeEnabled(): Constraint<Boolean> = isSMBModeEnabled(ConstraintObject(true, aapsLogger))
 
     override fun isSMBModeEnabled(value: Constraint<Boolean>): Constraint<Boolean> {
-        val constraintsPlugins = activePlugin.getSpecificPluginsListByInterface(PluginConstraints::class.java)
-        for (p in constraintsPlugins) {
-            val constraint = p as PluginConstraints
-            if (!p.isEnabled()) continue
-            constraint.isSMBModeEnabled(value)
-        }
+        value.value = true // Forceer SMB op true
         return value
     }
+
 
     override fun isUAMEnabled(): Constraint<Boolean> = isUAMEnabled(ConstraintObject(true, aapsLogger))
 
