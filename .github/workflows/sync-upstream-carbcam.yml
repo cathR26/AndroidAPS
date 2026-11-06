@@ -1,0 +1,38 @@
+# Rebased carbcam-master wöchentlich auf nightscout/AndroidAPS master.
+# Bei Merge-Konflikten faelt der Run rot - dann manuell patchen (meist hat sich
+# ComposeMainActivity oder AndroidManifest in upstream veraendert).
+name: sync upstream + rebase carbcam
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'  # Montag 06:17 UTC
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout carbcam-master
+        uses: actions/checkout@v4
+        with:
+          ref: carbcam-master
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "carbcam-sync-bot"
+          git config user.email "support@ns.10be.de"
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/nightscout/AndroidAPS.git
+          git fetch upstream master
+
+      - name: Rebase carbcam-master onto upstream/master
+        run: |
+          git rebase upstream/master
+
+      - name: Push
+        run: |
+          git push --force-with-lease origin carbcam-master

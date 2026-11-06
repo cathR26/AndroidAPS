@@ -204,6 +204,19 @@
                 tools:node="remove" />
         </provider>
 
+
+        <!-- CarbCam trampoline: whitelisted external launcher for the Bolus Wizard. -->
+        <activity
+            android:name="app.aaps.activities.WizardLaunchActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="info.nightscout.androidaps.action.OPEN_BOLUS_WIZARD" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

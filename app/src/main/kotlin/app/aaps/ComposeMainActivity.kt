@@ -231,6 +231,9 @@ class ComposeMainActivity : MetroAppCompatActivity() {
     }
     private var navController: NavHostController? = null
     private val _autoShowNotifications = mutableStateOf(false)
+    // CarbCam: pending navigation route built from an external Intent.
+    // Consumed by a LaunchedEffect in AppContent once the navController is ready.
+    private val pendingWizardRoute = mutableStateOf<String?>(null)
     private val disposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -299,6 +302,25 @@ class ComposeMainActivity : MetroAppCompatActivity() {
         setContent {
             MainContent()
         }
+
+        // CarbCam: external launch may already carry the wizard prefill.
+        processExternalWizardIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        processExternalWizardIntent(intent)
+    }
+
+    private fun processExternalWizardIntent(intent: Intent?) {
+        intent ?: return
+        val carbs = intent.getIntExtra("open_wizard_carbs", 0)
+        if (carbs <= 0) return
+        val notes = intent.getStringExtra("open_wizard_notes") ?: ""
+        intent.removeExtra("open_wizard_carbs")
+        intent.removeExtra("open_wizard_notes")
+        pendingWizardRoute.value = AppRoute.WizardDialog.createRoute(carbs = carbs, notes = notes)
     }
 
     @Composable
@@ -355,6 +377,13 @@ class ComposeMainActivity : MetroAppCompatActivity() {
     private fun AppContent(navController: NavHostController) {
         // Trigger initial refresh when app content first appears (after init completes)
         LaunchedEffect(Unit) { refreshOnResume() }
+
+        // CarbCam: deliver any pending external wizard navigation once per Intent.
+        LaunchedEffect(pendingWizardRoute.value) {
+            val route = pendingWizardRoute.value ?: return@LaunchedEffect
+            pendingWizardRoute.value = null
+            navController.navigate(route)
+        }
 
         // Track last navigated route as a Crashlytics custom key for crash reports
         DisposableEffect(navController) {
